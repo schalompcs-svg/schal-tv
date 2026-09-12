@@ -254,7 +254,7 @@ class PlayerActivity :
 
     override fun onPause() {
         if (itemId.isNotBlank()) {
-            prefs.saveResumePosition(
+            prefs.setResumePositionMs(
                 itemId,
                 playerManager.currentPositionMs()
             )

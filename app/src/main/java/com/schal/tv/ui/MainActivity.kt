@@ -356,7 +356,7 @@ class MainActivity :
     }
 
     private fun showHistory() {
-        val history = prefs.historyIds()
+        val history = prefs.history()
 
         if (history.isEmpty()) {
             AlertDialog.Builder(this)
@@ -440,7 +440,7 @@ class MainActivity :
             append("\n")
 
             append("Historique : ")
-            append(prefs.historyIds().size)
+            append(prefs.history().size)
             append("\n")
 
             append("\nSCHAL-TV • diagnostic local")
