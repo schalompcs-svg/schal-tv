@@ -107,4 +107,12 @@
             android:text="@string/info" />
     </LinearLayout>
 
+
+    <Button
+        android:id="@+id/btnTvScanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:text="📡 CAPTEUR TV HORS LIGNE"
+        android:textAllCaps="false" />
 </LinearLayout>

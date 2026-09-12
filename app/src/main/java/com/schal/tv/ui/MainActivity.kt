@@ -1,5 +1,7 @@
 package com.schal.tv.ui
 
+import com.schal.tv.tuner.OfflineTvScanner
+
 import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
@@ -34,6 +36,56 @@ class MainActivity : AppCompatActivity(), NavigationController {
     private lateinit var adapter: ChannelAdapter
     private var fullChannelList: List<TvChannel> = emptyList()
     private var favoritesOnly = false
+
+
+    /**
+     * Lance le diagnostic du capteur TV hors ligne.
+     *
+     * Aucun réseau n'est utilisé.
+     * Aucune chaîne fictive n'est ajoutée.
+     */
+    private fun lancerCapteurTvHorsLigne() {
+        val result = OfflineTvScanner(this).detect()
+
+        val message = if (result.supported) {
+            buildString {
+                append("📡 CAPTEUR TV\n\n")
+                append(result.message)
+                append("\n\n")
+
+                result.tuners.forEachIndexed { index, tuner ->
+                    append("${index + 1}. ")
+                    append(tuner.name)
+                    append("\n")
+                    append("   Type : ")
+                    append(tuner.typeLabel)
+                    append("\n")
+                    append("   ID : ")
+                    append(tuner.id)
+                    append("\n\n")
+                }
+
+                append("Le tuner est disponible hors ligne.")
+            }
+        } else {
+            """
+            📡 CAPTEUR TV
+
+            ${result.message}
+
+            SCHAL TV ne fabriquera aucune chaîne.
+            Pour recevoir des chaînes TV hertziennes,
+            l'appareil doit posséder un tuner TV compatible
+            ou un matériel TV externe reconnu par Android.
+            """.trimIndent()
+        }
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("📡 Capteur TV hors ligne")
+            .setMessage(message)
+            .setPositiveButton("OK", null)
+            .show()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
