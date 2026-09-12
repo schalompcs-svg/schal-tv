@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.schal.tv.R
-import com.schal.tv.cache.CacheManager
 import com.schal.tv.catalog.CatalogRepository
 import com.schal.tv.core.CatalogResult
 import com.schal.tv.core.NavKey
@@ -16,8 +15,6 @@ import com.schal.tv.core.NavigationController
 import com.schal.tv.core.TvChannel
 import com.schal.tv.databinding.ActivityMainBinding
 import com.schal.tv.offline.LocalMediaScanner
-import com.schal.tv.schalom.SchalomConnector
-import com.schal.tv.schalom.SchalomFetchResult
 import com.schal.tv.storage.FavoritesStore
 import com.schal.tv.storage.Prefs
 
@@ -32,9 +29,7 @@ class MainActivity : AppCompatActivity(), NavigationController {
     private lateinit var catalogRepository: CatalogRepository
     private lateinit var favoritesStore: FavoritesStore
     private lateinit var localMediaScanner: LocalMediaScanner
-    private lateinit var cacheManager: CacheManager
     private lateinit var prefs: Prefs
-    private lateinit var schalomConnector: SchalomConnector
 
     private lateinit var adapter: ChannelAdapter
     private var fullChannelList: List<TvChannel> = emptyList()
@@ -48,12 +43,9 @@ class MainActivity : AppCompatActivity(), NavigationController {
         catalogRepository = CatalogRepository(this)
         favoritesStore = FavoritesStore(this)
         localMediaScanner = LocalMediaScanner(this)
-        cacheManager = CacheManager(this)
         prefs = Prefs(this)
-        // Adresse SCHALOM : à fournir via configuration réelle de déploiement.
-        // null tant que non configurée => le connecteur renverra proprement
-        // une erreur "non configuré" plutôt que d'inventer une adresse.
-        schalomConnector = SchalomConnector(this, baseUrl = null)
+        // SCHAL TV est volontairement OFFLINE-ONLY : le catalogue est embarqué
+        // dans l'APK et aucune synchronisation réseau n'est effectuée.
 
         adapter = ChannelAdapter(
             onChannelSelected = { onChannelPicked(it) },
@@ -99,13 +91,11 @@ class MainActivity : AppCompatActivity(), NavigationController {
                 fullChannelList = applyFavoritesFlags(result.channels)
                 applyFilter("")
                 binding.textNoContent.visibility = android.view.View.GONE
-                maybeRefreshFromSchalom()
             }
             is CatalogResult.Empty -> {
                 fullChannelList = emptyList()
                 adapter.submitList(emptyList())
                 showNoContent(getString(R.string.no_offline_content))
-                maybeRefreshFromSchalom()
             }
             is CatalogResult.Error -> {
                 fullChannelList = emptyList()
@@ -114,24 +104,6 @@ class MainActivity : AppCompatActivity(), NavigationController {
             }
         }
         updateConnectivityBanner()
-    }
-
-    /** Tente un rafraîchissement réseau ; en cas d'échec, l'app continue avec les données locales. */
-    private fun maybeRefreshFromSchalom() {
-        if (!schalomConnector.isNetworkAvailable()) return
-        when (val fetch = schalomConnector.fetchCatalog()) {
-            is SchalomFetchResult.Success -> {
-                catalogRepository.saveDownloadedCatalog(fetch.rawJson)
-                val refreshed = catalogRepository.parseChannels(fetch.rawJson)
-                fullChannelList = applyFavoritesFlags(refreshed)
-                applyFilter(binding.searchInput.text?.toString().orEmpty())
-                refreshed.forEach { cacheManager.markCached(it.id) }
-            }
-            else -> {
-                // Timeout / indisponible / non configuré : on garde le
-                // catalogue local déjà chargé, sans message d'erreur bloquant.
-            }
-        }
     }
 
     private fun applyFavoritesFlags(channels: List<TvChannel>): List<TvChannel> {
@@ -159,11 +131,7 @@ class MainActivity : AppCompatActivity(), NavigationController {
     }
 
     private fun updateConnectivityBanner() {
-        binding.textConnectivityBanner.text = if (schalomConnector.isNetworkAvailable()) {
-            getString(R.string.mode_online)
-        } else {
-            getString(R.string.mode_offline)
-        }
+        binding.textConnectivityBanner.text = getString(R.string.mode_offline)
     }
 
     private fun moveSelection(delta: Int) {

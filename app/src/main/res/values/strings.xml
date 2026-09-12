@@ -13,6 +13,6 @@
     <string name="no_offline_content">AUCUN CONTENU HORS LIGNE DISPONIBLE</string>
     <string name="no_results">Aucun résultat</string>
     <string name="mode_online">Mode : en ligne (SCHALOM connecté)</string>
-    <string name="mode_offline">Mode : hors ligne</string>
+    <string name="mode_offline">Mode : HORS LIGNE — catalogue local</string>
     <string name="unknown_field">Non renseigné</string>
 </resources>

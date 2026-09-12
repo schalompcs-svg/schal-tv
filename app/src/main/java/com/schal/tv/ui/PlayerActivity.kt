@@ -54,7 +54,11 @@ class PlayerActivity : AppCompatActivity(), NavigationController, PlayerListener
         binding.btnBack.setOnClickListener { finish() }
 
         val resumeMs = if (itemId.isNotBlank()) prefs.resumePositionMs(itemId) else 0L
-        playerManager.play(streamUrl, resumeMs)
+        if (streamUrl.startsWith("http://") || streamUrl.startsWith("https://")) {
+            showStatus("Cette chaîne en direct nécessite Internet. Le catalogue SCHAL TV reste disponible hors ligne.")
+        } else {
+            playerManager.play(streamUrl, resumeMs)
+        }
     }
 
     private fun togglePlayPause() {

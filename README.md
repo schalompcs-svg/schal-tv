@@ -88,3 +88,8 @@ surveiller sur téléphones très modestes — une pagination/API distante plut�
 qu'un asset embarqué sera préférable à terme (voir
 `docs/LIMITES_ET_PROCHAINES_ETAPES.md`).
 
+
+
+## Mode hors ligne v0.4
+
+SCHAL TV fonctionne désormais en **offline-only** pour son catalogue : le fichier `schalom_catalog.json` est embarqué dans l'APK et aucune permission réseau (`INTERNET`) n'est demandée. L'application ne tente plus de synchroniser un catalogue distant. Les contenus locaux peuvent être lus sans connexion. Les chaînes dont `stream_url` pointe vers HTTP/HTTPS restent des flux Internet et ne peuvent pas être regardées sans réseau.
