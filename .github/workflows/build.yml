@@ -48,9 +48,23 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
+      - name: Vérifier et préparer SCHAL-TV-release.apk
+        run: |
+          set -e
+          mkdir -p release-artifact
+          APK="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          if [ -z "$APK" ]; then
+            echo "ERREUR : aucun APK release généré."
+            find app/build/outputs/apk/release -maxdepth 2 -type f -print || true
+            exit 1
+          fi
+          echo "APK release trouvé : $APK"
+          cp "$APK" release-artifact/SCHAL-TV-release.apk
+          ls -lh release-artifact/SCHAL-TV-release.apk
+
       - name: Publier SCHAL-TV-release.apk
         uses: actions/upload-artifact@v4
         with:
           name: SCHAL-TV-release
-          path: app/build/outputs/apk/release/app-release.apk
+          path: release-artifact/SCHAL-TV-release.apk
           if-no-files-found: error
