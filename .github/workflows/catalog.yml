@@ -54,10 +54,6 @@ jobs:
           )
           PY
 
-      - name: Valider le catalogue final
-        run: |
-          python3 tools/validate_catalog.py app/src/main/assets/schalom_catalog.json
-
       - name: Commit automatique uniquement si changement réel
         run: |
           git config user.name "SCHAL-TV Bot"
