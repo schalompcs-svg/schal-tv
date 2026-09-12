@@ -1,0 +1,74 @@
+name: SCHAL-TV Catalogue
+
+on:
+  schedule:
+    - cron: "25 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construire le catalogue depuis les sources publiques
+        run: |
+          python3 tools/refresh_catalog.py
+
+      - name: Valider les flux
+        run: |
+          python3 tools/validate_streams.py catalog-candidate.json
+
+      - name: Installer le catalogue validé
+        run: |
+          mkdir -p catalog
+          cp channels-valid.json catalog/channels-valid.json
+          cp channels-invalid.json catalog/channels-invalid.json
+          cp channels-report.json catalog/channels-report.json
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          source = json.loads(
+              Path("catalog/channels-valid.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+
+          target = Path(
+              "app/src/main/assets/schalom_catalog.json"
+          )
+
+          target.write_text(
+              json.dumps(
+                  source,
+                  ensure_ascii=False,
+                  separators=(",", ":")
+              ),
+              encoding="utf-8"
+          )
+          PY
+
+      - name: Valider le catalogue final
+        run: |
+          python3 tools/validate_catalog.py app/src/main/assets/schalom_catalog.json
+
+      - name: Commit automatique uniquement si changement réel
+        run: |
+          git config user.name "SCHAL-TV Bot"
+          git config user.email "schal-tv-bot@users.noreply.github.com"
+
+          git add catalog app/src/main/assets/schalom_catalog.json
+
+          if git diff --cached --quiet; then
+            echo "Aucun changement de catalogue."
+            exit 0
+          fi
+
+          git commit -m "catalog: refresh validated TV streams"
+          git push origin main

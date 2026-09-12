@@ -1,138 +1,270 @@
 package com.schal.tv.ui
 
+import android.content.pm.ActivityInfo
 import android.os.Bundle
-import android.view.KeyEvent
+import android.view.View
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
-import com.schal.tv.core.NavKey
-import com.schal.tv.core.NavigationController
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.schal.tv.catalog.CatalogRepository
+import com.schal.tv.core.CatalogResult
 import com.schal.tv.databinding.ActivityPlayerBinding
 import com.schal.tv.player.PlaybackState
 import com.schal.tv.player.PlayerListener
 import com.schal.tv.player.PlayerManager
 import com.schal.tv.storage.Prefs
 
-class PlayerActivity : AppCompatActivity(), NavigationController, PlayerListener {
+class PlayerActivity :
+    AppCompatActivity(),
+    PlayerListener {
 
     private lateinit var binding: ActivityPlayerBinding
     private lateinit var playerManager: PlayerManager
     private lateinit var prefs: Prefs
-    private var itemId: String = ""
-    private var isPlaying = false
+
+    private var itemId = ""
+    private var currentTitle = ""
+
+    companion object {
+        const val EXTRA_TITLE = "title"
+        const val EXTRA_STREAM_URL = "stream_url"
+        const val EXTRA_ITEM_ID = "item_id"
+        const val EXTRA_VOLUME_PERCENT = "volume_percent"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         prefs = Prefs(this)
+
         playerManager = PlayerManager(this)
         playerManager.setListener(this)
         playerManager.attachView(binding.playerView)
 
-        val title = intent.getStringExtra(EXTRA_TITLE).orEmpty()
-        val streamUrl = intent.getStringExtra(EXTRA_STREAM_URL).orEmpty()
-        itemId = intent.getStringExtra(EXTRA_ITEM_ID).orEmpty()
-        val volumePercent = intent.getIntExtra(EXTRA_VOLUME_PERCENT, prefs.volumePercent)
+        currentTitle =
+            intent.getStringExtra(EXTRA_TITLE).orEmpty()
 
-        binding.channelTitle.text = title
-        binding.volumeSeekBar.progress = volumePercent
-        playerManager.setVolumePercent(volumePercent)
+        val streamUrl =
+            intent.getStringExtra(EXTRA_STREAM_URL).orEmpty()
 
-        binding.volumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    playerManager.setVolumePercent(progress)
-                    prefs.volumePercent = progress
+        itemId =
+            intent.getStringExtra(EXTRA_ITEM_ID).orEmpty()
+
+        binding.channelTitle.text = currentTitle
+
+        binding.volumeSeekBar.progress =
+            intent.getIntExtra(
+                EXTRA_VOLUME_PERCENT,
+                prefs.volumePercent
+            )
+
+        playerManager.setVolumePercent(
+            binding.volumeSeekBar.progress
+        )
+
+        binding.volumeSeekBar.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    if (fromUser) {
+                        playerManager.setVolumePercent(progress)
+                        prefs.volumePercent = progress
+                    }
+                }
+
+                override fun onStartTrackingTouch(
+                    seekBar: SeekBar?
+                ) {
+                }
+
+                override fun onStopTrackingTouch(
+                    seekBar: SeekBar?
+                ) {
                 }
             }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        )
 
-        binding.btnPlayPause.setOnClickListener { togglePlayPause() }
-        binding.btnBack.setOnClickListener { finish() }
+        binding.btnBack.setOnClickListener {
+            finish()
+        }
 
-        val resumeMs = if (itemId.isNotBlank()) prefs.resumePositionMs(itemId) else 0L
-        if (streamUrl.startsWith("http://") || streamUrl.startsWith("https://")) {
-            showStatus("Cette chaîne en direct nécessite Internet. Le catalogue SCHAL TV reste disponible hors ligne.")
+        binding.btnFullscreen.setOnClickListener {
+            toggleFullscreen()
+        }
+
+        binding.btnPlayPause.setOnClickListener {
+            if (binding.btnPlayPause.text
+                    .toString()
+                    .contains("Lecture", true)
+            ) {
+                playerManager.resume()
+            } else {
+                playerManager.pause()
+            }
+        }
+
+        setupOtherChannels()
+
+        if (
+            streamUrl.startsWith("http://") ||
+            streamUrl.startsWith("https://")
+        ) {
+            playerManager.play(streamUrl)
         } else {
-            playerManager.play(streamUrl, resumeMs)
+            onStateChanged(
+                PlaybackState.Error(
+                    "Flux Internet non configuré."
+                )
+            )
         }
     }
 
-    private fun togglePlayPause() {
-        if (isPlaying) playerManager.pause() else playerManager.resume()
+    private fun setupOtherChannels() {
+        val repository = CatalogRepository(this)
+
+        when (val result = repository.loadCatalog()) {
+            is CatalogResult.Success -> {
+
+                val others =
+                    result.channels
+                        .filter { it.id != itemId }
+                        .sortedBy { it.name.lowercase() }
+
+                val adapter = ChannelAdapter(
+                    onChannelSelected = { channel ->
+                        prefs.lastChannelId = channel.id
+                        prefs.pushHistory(channel.id)
+
+                        finish()
+
+                        startActivity(
+                            intent
+                                .putExtra(
+                                    EXTRA_TITLE,
+                                    channel.name
+                                )
+                                .putExtra(
+                                    EXTRA_STREAM_URL,
+                                    channel.streamUrl
+                                )
+                                .putExtra(
+                                    EXTRA_ITEM_ID,
+                                    channel.id
+                                )
+                        )
+                    },
+                    onFavoriteToggle = {
+                        // Les favoris restent gérés depuis l'écran principal.
+                    }
+                )
+
+                adapter.submitList(others)
+
+                binding.recyclerOtherChannels.layoutManager =
+                    LinearLayoutManager(this)
+
+                binding.recyclerOtherChannels.adapter =
+                    adapter
+            }
+
+            else -> {
+                binding.textOtherStatus.text =
+                    "Autres chaînes indisponibles hors connexion."
+            }
+        }
     }
 
-    override fun onStateChanged(state: PlaybackState) {
+    private fun toggleFullscreen() {
+        if (requestedOrientation ==
+            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        ) {
+            requestedOrientation =
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR
+
+            window.decorView.systemUiVisibility =
+                View.SYSTEM_UI_FLAG_VISIBLE
+        } else {
+            requestedOrientation =
+                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+
+            window.decorView.systemUiVisibility =
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        }
+    }
+
+    override fun onStateChanged(
+        state: PlaybackState
+    ) {
         runOnUiThread {
             when (state) {
-                is PlaybackState.Playing -> {
-                    isPlaying = true
-                    binding.textPlayerStatus.visibility = android.view.View.GONE
+                PlaybackState.Buffering -> {
+                    binding.textPlayerStatus.visibility =
+                        View.VISIBLE
+
+                    binding.textPlayerStatus.text =
+                        "Chargement du flux…"
                 }
-                is PlaybackState.Paused -> isPlaying = false
-                is PlaybackState.Buffering -> showStatus("Chargement…")
-                is PlaybackState.Ended -> showStatus("Lecture terminée")
+
+                PlaybackState.Playing -> {
+                    binding.textPlayerStatus.visibility =
+                        View.GONE
+
+                    binding.btnPlayPause.text =
+                        "Pause"
+                }
+
+                PlaybackState.Paused -> {
+                    binding.textPlayerStatus.visibility =
+                        View.VISIBLE
+
+                    binding.textPlayerStatus.text =
+                        "Lecture en pause"
+
+                    binding.btnPlayPause.text =
+                        "Lecture"
+                }
+
                 is PlaybackState.Error -> {
-                    isPlaying = false
-                    showStatus(state.message)
+                    binding.textPlayerStatus.visibility =
+                        View.VISIBLE
+
+                    binding.textPlayerStatus.text =
+                        state.message
+
+                    binding.btnPlayPause.text =
+                        "Lecture"
                 }
-                PlaybackState.Idle -> {}
+
+                else -> {
+                    binding.textPlayerStatus.visibility =
+                        View.GONE
+                }
             }
         }
-    }
-
-    private fun showStatus(message: String) {
-        binding.textPlayerStatus.text = message
-        binding.textPlayerStatus.visibility = android.view.View.VISIBLE
     }
 
     override fun onPause() {
-        super.onPause()
         if (itemId.isNotBlank()) {
-            prefs.setResumePositionMs(itemId, playerManager.currentPositionMs())
+            prefs.saveResumePosition(
+                itemId,
+                playerManager.currentPositionMs()
+            )
         }
-        playerManager.pause()
+
+        super.onPause()
     }
 
     override fun onDestroy() {
         playerManager.release()
         super.onDestroy()
-    }
-
-    override fun onNavKey(key: NavKey): Boolean = when (key) {
-        NavKey.OK -> { togglePlayPause(); true }
-        NavKey.BACK -> { finish(); true }
-        NavKey.UP -> { adjustVolume(+5); true }
-        NavKey.DOWN -> { adjustVolume(-5); true }
-        else -> false
-    }
-
-    private fun adjustVolume(delta: Int) {
-        val newValue = (binding.volumeSeekBar.progress + delta).coerceIn(0, 100)
-        binding.volumeSeekBar.progress = newValue
-        playerManager.setVolumePercent(newValue)
-        prefs.volumePercent = newValue
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        val navKey = when (keyCode) {
-            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> NavKey.OK
-            KeyEvent.KEYCODE_BACK -> NavKey.BACK
-            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_VOLUME_UP -> NavKey.UP
-            KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_VOLUME_DOWN -> NavKey.DOWN
-            else -> null
-        }
-        if (navKey != null && onNavKey(navKey)) return true
-        return super.onKeyDown(keyCode, event)
-    }
-
-    companion object {
-        const val EXTRA_TITLE = "extra_title"
-        const val EXTRA_STREAM_URL = "extra_stream_url"
-        const val EXTRA_ITEM_ID = "extra_item_id"
-        const val EXTRA_VOLUME_PERCENT = "extra_volume_percent"
     }
 }

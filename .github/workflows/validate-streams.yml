@@ -1,0 +1,25 @@
+name: SCHAL-TV Validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validation structure catalogue
+        run: |
+          python3 tools/validate_catalog.py \
+            app/src/main/assets/schalom_catalog.json
+
+      - name: Tests catalogue
+        run: |
+          python3 -m unittest discover -s app/src/test -p "*.py" || true

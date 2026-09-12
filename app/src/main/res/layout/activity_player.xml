@@ -1,69 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:orientation="vertical"
+    android:background="#090A0E">
 
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/playerView"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:use_controller="false" />
+        android:layout_height="0dp"
+        android:layout_weight="0.52"
+        android:background="#000000">
 
-    <TextView
-        android:id="@+id/textPlayerStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:visibility="gone" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="12dp">
-
-        <Button
-            android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/back" />
+        <androidx.media3.ui.PlayerView
+            android:id="@+id/playerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:use_controller="true"
+            app:show_buffering="when_playing" />
 
         <TextView
-            android:id="@+id/channelTitle"
-            android:layout_width="0dp"
+            android:id="@+id/textPlayerStatus"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_gravity="center"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:paddingStart="12dp" />
-    </LinearLayout>
+            android:textSize="15sp"
+            android:background="#99000000"
+            android:padding="12dp"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="12dp">
+        android:layout_height="0dp"
+        android:layout_weight="0.48"
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp">
 
-        <Button
-            android:id="@+id/btnPlayPause"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/play_pause" />
+            android:gravity="center_vertical">
 
-        <SeekBar
-            android:id="@+id/volumeSeekBar"
-            android:layout_width="0dp"
+            <Button
+                android:id="@+id/btnBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="← Retour"
+                android:textAllCaps="false" />
+
+            <TextView
+                android:id="@+id/channelTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingStart="12dp"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <Button
+                android:id="@+id/btnFullscreen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⛶"
+                android:textAllCaps="false" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+
+            <Button
+                android:id="@+id/btnPlayPause"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pause"
+                android:textAllCaps="false" />
+
+            <SeekBar
+                android:id="@+id/volumeSeekBar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="AUTRES CHAÎNES"
+            android:textColor="@color/schalAccent"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/textOtherStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/schalMuted"
+            android:textSize="12sp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerOtherChannels"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
-            android:max="100" />
+            android:clipToPadding="false"
+            android:paddingBottom="8dp" />
+
     </LinearLayout>
 
-</FrameLayout>
+</LinearLayout>

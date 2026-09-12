@@ -1,9 +1,5 @@
 package com.schal.tv.core
 
-/**
- * Statut de vérification d'un flux. "unknown" = jamais vérifié, ne doit
- * JAMAIS être présenté à l'utilisateur comme "disponible".
- */
 enum class StreamStatus {
     UNKNOWN, CHECKING, ONLINE, OFFLINE, INVALID, UNSUPPORTED;
 
@@ -33,11 +29,6 @@ enum class StreamType {
     }
 }
 
-/**
- * Chaîne TV telle que définie par le format SCHALOM (schalom_catalog.json).
- * Champs fidèles au schéma imposé : aucune valeur ne doit être inventée si
- * elle est absente du JSON source (voir CatalogRepository).
- */
 data class TvChannel(
     val id: String,
     val name: String,
@@ -45,8 +36,12 @@ data class TvChannel(
     val country: String = "",
     val language: String = "",
     val logo: String = "",
+    val category: String = "",
+    val genre: String = "",
     val streamUrl: String = "",
+    val alternateStreams: List<String> = emptyList(),
     val streamType: StreamType = StreamType.UNKNOWN,
+    val quality: String = "",
     val isLive: Boolean = true,
     val isActive: Boolean = true,
     val offlineAvailable: Boolean = false,
@@ -54,8 +49,10 @@ data class TvChannel(
     val updatedAt: String = "",
     var streamStatus: StreamStatus = StreamStatus.UNKNOWN
 ) {
-    /** Un flux est "configuré" seulement si une URL non vide est présente. */
     fun hasConfiguredStream(): Boolean = streamUrl.isNotBlank()
+
+    fun searchableText(): String =
+        "$name $country $language $category $genre".lowercase()
 }
 
 data class LocalVideo(
@@ -88,7 +85,6 @@ data class CacheManifest(
     val items: MutableList<CacheItem> = mutableListOf()
 )
 
-/** Résultat de chargement du catalogue : jamais d'exception silencieuse. */
 sealed class CatalogResult {
     data class Success(val channels: List<TvChannel>) : CatalogResult()
     data class Empty(val reason: String) : CatalogResult()

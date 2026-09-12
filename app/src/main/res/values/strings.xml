@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">SCHAL TV</string>
-    <string name="search_hint">Rechercher une chaîne…</string>
+    <string name="app_name">SCHAL-TV</string>
+    <string name="search_hint">Rechercher chaîne, pays, langue, catégorie…</string>
     <string name="play">Lecture</string>
     <string name="play_pause">Lecture/Pause</string>
     <string name="prev_channel">◀ Précédent</string>
@@ -10,9 +10,10 @@
     <string name="info">Infos</string>
     <string name="back">Retour</string>
     <string name="stream_not_configured">Flux non configuré</string>
-    <string name="no_offline_content">AUCUN CONTENU HORS LIGNE DISPONIBLE</string>
+    <string name="no_offline_content">AUCUN CONTENU DISPONIBLE</string>
     <string name="no_results">Aucun résultat</string>
-    <string name="mode_online">Mode : en ligne (SCHALOM connecté)</string>
-    <string name="mode_offline">Mode : HORS LIGNE — catalogue local</string>
+    <string name="mode_online">En ligne</string>
+    <string name="mode_offline">Hors ligne</string>
     <string name="unknown_field">Non renseigné</string>
+    <string name="channel_logo">Logo de la chaîne</string>
 </resources>
