@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SchalTV" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/schalAccent</item>
+        <item name="colorPrimaryDark">@color/schalBackground</item>
+        <item name="android:windowBackground">@color/schalBackground</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

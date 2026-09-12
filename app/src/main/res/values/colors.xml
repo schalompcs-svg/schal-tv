@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="schalBackground">#0E0F13</color>
+    <color name="schalAccent">#3DA9FC</color>
+    <color name="schalText">#F5F5F5</color>
+    <color name="schalMuted">#9AA0A6</color>
+</resources>
